@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script src="controller/angular.js"></script>
+	<script src="controller/angular_animate.js"></script>
+	<style type="text/css">
+		.main {
+			margin-left: -25px;
+			margin-top:50px;
+			width:400px;
+		}
+		ul {
+			list-style: none;
+			max-height: 200px;
+    		overflow-y: auto;
+    		margin-right:-40px;
+		}
+		.tabs {
+			margin-left:100px;
+		}
+
+		.tabs ul li {
+			float: left;
+    		padding: 5px 10px 5px 10px;
+    		width:4.5em;
+
+		}
+		 .tabs ul li:hover,.removeTask:hover,.edit:hover,.save:hover {
+		 	cursor: pointer;
+		 }
+		.active {
+			border-bottom: 2px solid #009955;
+		}
+		.taskView {
+			width: 200px;
+   			clear: both;
+    		margin: 40px;
+    		margin-top: 50px;
+    		padding-right: 4em;
+		}
+		.task-all,.task-comp {
+			width:325px;
+			margin-left: -25px;
+			margin-top:-40px;
+		}
+		.task-all ul li,.task-comp ul li {
+			text-align: left;
+    		padding:5px;
+    		width: inherit;
+    		margin-left: -4px;
+    		margin-top:2px;
+    		font-size:10pt;
+		}
+		input[type=checkbox] {
+			vertical-align: middle;
+		}
+		.checked {
+			text-decoration:line-through;
+		}
+		.removeTask{
+			font-size: 12pt;
+    		color: #ccc;
+    		font-family: cursive;
+   			margin-top: -2px;
+    		margin-right: -3px;
+    		padding-right: 6px;
+		}
+		.task-comp {
+			margin-left: -4px;
+		}
+		.itemDiv,.close {
+			display: inline-block;
+		}
+		.itemDiv {
+			overflow: hidden;
+			white-space:nowrap;
+			text-overflow: ellipsis;
+			max-width: 210px;
+		}
+		.itemDiv label {
+			font-family: cursive;
+		}
+		.close{
+			float: right;
+		}
+		.taskBox {
+			margin-left:75px;
+		}
+		.taskBox button {
+			width: 60px;
+    		height: 30px;
+    	    border: 0;
+    	    outline: none;
+    	    font-family:cursive;
+    	    background-color: orange;
+    	    color:white;
+		}
+		.taskBox input {
+			float:left;
+			width: 200px;
+    		height: 10px;
+    		border: 0;
+    		border-bottom: 1px solid #ccc;
+    		padding: 10px;
+    		padding-top: 9px;
+    		outline: none;
+    		font-family:cursive;
+		}
+		.mark{
+			float: left;
+			margin-right: 6px;
+			font-size: 10pt;
+			text-align: center;
+			font-weight: bold;
+			color: #009955;
+		}
+		ul::-webkit-scrollbar {
+		    width: 2px;
+		}
+
+		/* Track */
+		ul::-webkit-scrollbar-track {
+		    background: #ccc;
+		    background-clip: content-box;
+		}
+
+		/* Handle */
+		ul::-webkit-scrollbar-thumb {
+		    background: #eee;
+		}
+		
+		.options {
+			float:right;
+		}
+		.edit,.save {
+			display: inline-block;
+			margin-right:15px;
+			font-size: 12pt;
+		}
+		.errmsg {
+			margin-left: 120px;
+			color:red;
+		}
+		.title {
+			text-align: center;  
+			font-family: cursive;
+    		color: #009955;
+		}
+	</style>
+</head>
+<body>	
+	<div ng-app="todo" ng-controller="todoCtrl" class="main">
+		<h1 class="title">Todo List</h1>
+		<div class="taskBox">
+			<label><input type="text" ng-model="task" id="task" ng-keyup="addTask($event)" autofocus="true" placeholder="Enter task" />
+			<button ng-click="addTask('add')">ADD</button>
+			</label>
+		</div>
+		<div class="tabs" ng-show="all.length != 0">
+			<ul>
+				<li ng-repeat="tab in tabs"  ng-class="{active:isActiveTab(tab.url)}" 
+                ng-click="onClickTab(tab)">{{tab.title}}</li>
+			</ul>
+		</div>
+		<div class="taskView">
+			  <div ng-include="currentTab"></div>
+		</div>
+
+		<script type="text/ng-template" id="all">
+			<div class="task-all">
+				<ul>
+					<li ng-repeat="task in all">
+						<div class="itemDiv" title="{{task}}">
+							<input type="checkbox" value="{{$index}}" id="{{$index}}" ng-click="completeTask($index)" ng-checked="isCompleted($index)"/>
+							<label for="{{$index}}" ng-class="{checked:isCompleted($index)}" ng-if="isURL(task)"><a href="{{task}}" target="_blank">{{task}}</a></label>
+							<label for="{{$index}}" ng-class="{checked:isCompleted($index)}" ng-if="!isURL(task)">{{task}}</label>
+						</div>
+						<div class="options" ng-init="flag=true">
+							<div class="edit" ng-show="flag" ng-hide="isCompleted($index)"><span ng-click="flag = editTask($index);" ng-bind-html="edit_button"> {{edit_button}} </span></div>
+							<div class="save" ng-hide="flag"><span ng-click="saveTask($index);flag=!flag" ng-bind-html="save_button"> {{save_button}} </span></div>
+							<div class="close"><span class="removeTask" ng-click="removeTask($index)" ng-bind-html="close_button"> {{close_button}} </span></div>
+						</div>
+					</li>
+				</ul>
+				<span class="errmsg">{{errorMsg}}</span>
+			</div>
+		</script>
+		<script type="text/ng-template" id="comp">
+			<div class="task-comp">
+				<ul>
+					<li ng-repeat="comp in completed">
+						<div class="itemDiv" title="{{comp}}">
+							<div class="mark">&#10004;</div>
+							<label>{{comp}}</label>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</script>
+	</div>
+	<script src="controller/todoCntrl.js"></script>
+</body>
+</html>
